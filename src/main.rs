@@ -29,7 +29,54 @@ fn main() {
 }
 
 
-fn analisis_lexico(mut content: String) -> Vec<String>  {
+fn analisis_lexico(mut content: String) -> Vec<String> {
+    println!("El contenido: {}", content); 
+
+    let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
+    println!("{:?}", id_regex);
+
+    let valid_tokens = vec![
+        "SELECT".to_string(),"FROM".to_string(),"INNER".to_string(),"JOIN".to_string()
+    ];
+    
+    let valid_symbols = ";*()<>=,.";
+
+    let mut final_tokens_list: Vec<String> = Vec::new(); 
+    let mut buffer = String::new(); 
+    let mut start_buffer = false;
+    let mut end_buffer = false;
+    let mut limit: usize = 0; 
+    for (index, ch) in content.char_indices() {
+        println!(">>>>>>>>>>>>>>>>>>>>>>>>>> {}-{}", index, ch);
+        if index < limit {
+            continue; 
+        }
+        if ch.is_alphanumeric() && ch.is_numeric() {
+            for (index2, ch2) in content.char_indices() {
+                if valid_symbols.contains(ch2) {
+                    println!("Guardar en buffer: {}", &buffer); 
+                    final_tokens_list.push(buffer);
+                    final_tokens_list.push(ch2.to_string());
+                    buffer = String::new();
+                    continue;
+                }
+                if ch2.is_whitespace() {
+                    println!("Guardar en buffer: {}", &buffer); 
+                    final_tokens_list.push(buffer);
+                    buffer = String::new();
+                    continue;
+                } else {
+                    buffer.push(ch2);
+                }
+                limit = index2;
+            }
+        }
+    }
+    final_tokens_list
+
+}
+
+fn analisis_lexico2(mut content: String) -> Vec<String>  {
     content.insert_str(0, " ");
     println!("El contenido: {}", content); 
 
