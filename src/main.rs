@@ -23,12 +23,12 @@ fn main() {
             panic!("ERROR TRYING TO READ THE FILE");
         });
 
-    lexic_analysis(content);
+    analisis_lexico(content);
 
 }
 
 
-fn lexic_analysis(mut content: String) {
+fn analisis_lexico(mut content: String) {
     content.insert_str(0, " ");
     println!("El contenido: {}", content); 
 
