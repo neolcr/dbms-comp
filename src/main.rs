@@ -1,3 +1,4 @@
+use core::panic;
 use std::fs;
 use std::env;
 use regex::Regex;
@@ -26,8 +27,95 @@ fn main() {
 
 }
 
+
 #[allow(unused_variables)]
-fn lexic_analysis(content: String) {
+fn lexic_analysis(mut content: String) {
+    content.insert_str(0, " ");
+    println!("El contenido: {}", content); 
+
+    let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
+    println!("{:?}", id_regex);
+
+    let valid_tokens = vec![
+        "SELECT".to_string(),"FROM".to_string(),"INNER".to_string(),"JOIN".to_string()
+    ];
+    
+    let valid_symbols = ";*()<>=,.";
+
+    let mut final_tokens_list: Vec<String> = Vec::new(); 
+    let mut buffer = String::new(); 
+    let mut found_keyword: bool = false;
+    let mut found_symbol: bool = false;
+    let mut found_whitespace: bool = false;
+    let mut found_identifier: bool = false;
+    let mut start_buffer = false;
+    let mut end_buffer = false;
+ 
+    
+    for ch in content.chars() {
+        println!("Char: {}", ch);        
+        if valid_symbols.contains(ch) {
+            println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
+            final_tokens_list.push(ch.to_string());
+            buffer = String::new();
+            continue;
+        }
+        if ch.is_ascii_whitespace() {
+            println!("Detectado espacio en blanco");
+            println!("El estado de end_buffer es {}", end_buffer.to_string());
+            if !start_buffer {
+                println!("Empiezo a llenar el buffer");
+                start_buffer = true;
+                println!("Acaba de ser puesto start_buffer a true");
+                end_buffer = true;
+                buffer = String::new();
+                continue;
+            }
+            if end_buffer {
+                println!("Hora de mirar el buffer {}", buffer.to_string());
+                end_buffer = false;
+                println!("Acaba de ser puesto end_buffer a false");
+                let is_match = id_regex.is_match(&buffer);
+                println!("is match {}", is_match.to_string());
+                if valid_tokens.contains(&buffer.to_ascii_uppercase()) || id_regex.is_match(&buffer) {
+                    println!("Insertando valor: {}", &buffer);
+                    final_tokens_list.push(buffer.to_string());
+                    buffer = String::new();
+                    start_buffer = false;
+                    continue;
+                }
+                else {
+                    //panic!("KEYWORD INVALIDO");
+
+                }
+            }
+        }
+        if !valid_symbols.contains(ch) && ch.is_ascii_punctuation() {
+             let error_message = format!("SIMBOLO INVALIDO: {}", ch);
+             panic!("{}", error_message);
+         
+        }
+        // descartados simbolos puedo meter en el buffer
+        if start_buffer {
+            buffer.push(ch);
+            println!("Buffer: {}", buffer);
+
+
+        }
+        
+        
+    }
+    println!("######## MOSTRAR LA LISTA FINAL DE TOKENS #######"); 
+    for tok in &final_tokens_list {
+        println!("Token: {}", tok);
+    }
+}
+
+
+
+#[allow(unused_variables)]
+#[allow(dead_code)]
+fn lexic_analysis2(content: String) {
     println!("El contenido: {}", content); 
 
     let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
@@ -35,14 +123,10 @@ fn lexic_analysis(content: String) {
 
     let tokens = vec![
         Token::Keyword("SELECT".to_string()),
-        Token::Symbol('*'),
         Token::Keyword("FROM".to_string()),
         Token::Keyword("INNER".to_string()),
         Token::Keyword("JOIN".to_string()),
         Token::Identifier(id_regex),
-        Token::Symbol(';'),
-        Token::Symbol('('),
-
     ];
     
     let mut final_tokens_list: Vec<String> = Vec::new(); 
@@ -51,7 +135,8 @@ fn lexic_analysis(content: String) {
     let mut found_symbol: bool = false;
     let mut found_whitespace: bool = false;
     let mut found_identifier: bool = false;
-
+    let valid_symbols = ";*()<>=,.";
+    
     for ch in content.chars() {
         println!("{}", ch);
         buffer.push(ch);
@@ -69,7 +154,22 @@ fn lexic_analysis(content: String) {
                     }
                     found_keyword = true;
                 }
-                if let Token::Symbol(value) = token {
+                if valid_symbols.contains(ch) {
+                    println!("Se encontro el simbolo: {}", ch);
+                    final_tokens_list.push(ch.to_string());
+                    buffer = String::new();
+                    found_symbol = true;
+                }
+                if ch.is_whitespace() {
+                   buffer = String::new();
+                   found_whitespace = true;
+                }
+                if !valid_symbols.contains(ch) && ch.is_ascii_punctuation() {
+                     let error_message = format!("SIMBOLO INVALIDO: {}", ch);
+                     panic!("{}", error_message);
+                 
+                }
+                /*if let Token::Symbol(value) = token {
                      if ch == *value {
                         println!("Se encontro el simbolo: {}", ch);
                         final_tokens_list.push(ch.to_string());
@@ -81,7 +181,11 @@ fn lexic_analysis(content: String) {
                         buffer = String::new();
                         found_whitespace = true;
                      }
-                }
+                     else {
+                         let error_message = format!("SIMBOLO INVALIDO: {}", ch);
+                         panic!("{}", error_message);
+                     }
+                }*/
             }
             
             if !found_symbol && !found_whitespace && !found_keyword {
@@ -105,13 +209,13 @@ fn lexic_analysis(content: String) {
 
         }
     }
-    
+  
     println!("######## MOSTRAR LA LISTA FINAL DE TOKENS #######"); 
     for tok in &final_tokens_list {
         println!("Token: {}", tok);
     }
-    
-    
+
+   
 }
 
 
