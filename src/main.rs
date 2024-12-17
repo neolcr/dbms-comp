@@ -54,27 +54,17 @@ fn lexic_analysis(mut content: String) {
     
     for ch in content.chars() {
         println!("Char: {}", ch);        
-        if valid_symbols.contains(ch) {
-            println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
-            final_tokens_list.push(ch.to_string());
-            buffer = String::new();
-            continue;
-        }
         if ch.is_ascii_whitespace() {
             println!("Detectado espacio en blanco");
-            println!("El estado de end_buffer es {}", end_buffer.to_string());
             if !start_buffer {
                 println!("Empiezo a llenar el buffer");
                 start_buffer = true;
-                println!("Acaba de ser puesto start_buffer a true");
                 end_buffer = true;
                 buffer = String::new();
                 continue;
             }
             if end_buffer {
                 println!("Hora de mirar el buffer {}", buffer.to_string());
-                end_buffer = false;
-                println!("Acaba de ser puesto end_buffer a false");
                 let is_match = id_regex.is_match(&buffer);
                 println!("is match {}", is_match.to_string());
                 if valid_tokens.contains(&buffer.to_ascii_uppercase()) || id_regex.is_match(&buffer) {
@@ -82,6 +72,7 @@ fn lexic_analysis(mut content: String) {
                     final_tokens_list.push(buffer.to_string());
                     buffer = String::new();
                     start_buffer = false;
+                    end_buffer = false;
                     continue;
                 }
                 else {
@@ -96,13 +87,29 @@ fn lexic_analysis(mut content: String) {
          
         }
         // descartados simbolos puedo meter en el buffer
+
+        if ch.is_alphabetic() {
+           if !start_buffer {
+                println!("Detecto nuevo caracter valido: empiezo a llenar el buffer");
+                start_buffer = true;
+                end_buffer = true;
+                buffer = String::new();
+            }
+
+        }
+        
         if start_buffer {
             buffer.push(ch);
             println!("Buffer: {}", buffer);
 
 
         }
-        
+        if valid_symbols.contains(ch) {
+            println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
+            final_tokens_list.push(ch.to_string());
+            buffer = String::new();
+            continue;
+        }
         
     }
     println!("######## MOSTRAR LA LISTA FINAL DE TOKENS #######"); 
