@@ -54,6 +54,12 @@ fn lexic_analysis(mut content: String) {
     
     for ch in content.chars() {
         println!("Char: {}", ch);        
+        if valid_symbols.contains(ch) {
+            println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
+            final_tokens_list.push(ch.to_string());
+            buffer = String::new();
+            continue;
+        }
         if ch.is_ascii_whitespace() {
             println!("Detectado espacio en blanco");
             if !start_buffer {
@@ -65,8 +71,6 @@ fn lexic_analysis(mut content: String) {
             }
             if end_buffer {
                 println!("Hora de mirar el buffer {}", buffer.to_string());
-                let is_match = id_regex.is_match(&buffer);
-                println!("is match {}", is_match.to_string());
                 if valid_tokens.contains(&buffer.to_ascii_uppercase()) || id_regex.is_match(&buffer) {
                     println!("Insertando valor: {}", &buffer);
                     final_tokens_list.push(buffer.to_string());
@@ -76,8 +80,8 @@ fn lexic_analysis(mut content: String) {
                     continue;
                 }
                 else {
-                    //panic!("KEYWORD INVALIDO");
-
+                    let error_message = format!("KEYWORD O PALABRA INVALIDA: {}", buffer);
+                    panic!("{}", error_message);
                 }
             }
         }
@@ -88,7 +92,7 @@ fn lexic_analysis(mut content: String) {
         }
         // descartados simbolos puedo meter en el buffer
 
-        if ch.is_alphabetic() {
+        if ch.is_alphabetic() || ch.is_numeric() {
            if !start_buffer {
                 println!("Detecto nuevo caracter valido: empiezo a llenar el buffer");
                 start_buffer = true;
@@ -101,14 +105,6 @@ fn lexic_analysis(mut content: String) {
         if start_buffer {
             buffer.push(ch);
             println!("Buffer: {}", buffer);
-
-
-        }
-        if valid_symbols.contains(ch) {
-            println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
-            final_tokens_list.push(ch.to_string());
-            buffer = String::new();
-            continue;
         }
         
     }
