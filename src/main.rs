@@ -28,7 +28,6 @@ fn main() {
 }
 
 
-#[allow(unused_variables)]
 fn lexic_analysis(mut content: String) {
     content.insert_str(0, " ");
     println!("El contenido: {}", content); 
@@ -44,13 +43,8 @@ fn lexic_analysis(mut content: String) {
 
     let mut final_tokens_list: Vec<String> = Vec::new(); 
     let mut buffer = String::new(); 
-    let mut found_keyword: bool = false;
-    let mut found_symbol: bool = false;
-    let mut found_whitespace: bool = false;
-    let mut found_identifier: bool = false;
     let mut start_buffer = false;
     let mut end_buffer = false;
- 
     
     for ch in content.chars() {
         println!("Char: {}", ch);        
@@ -114,132 +108,10 @@ fn lexic_analysis(mut content: String) {
     }
 }
 
-
-
-#[allow(unused_variables)]
 #[allow(dead_code)]
-fn lexic_analysis2(content: String) {
-    println!("El contenido: {}", content); 
-
-    let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
-    println!("{:?}", id_regex);
-
-    let tokens = vec![
-        Token::Keyword("SELECT".to_string()),
-        Token::Keyword("FROM".to_string()),
-        Token::Keyword("INNER".to_string()),
-        Token::Keyword("JOIN".to_string()),
-        Token::Identifier(id_regex),
-    ];
-    
-    let mut final_tokens_list: Vec<String> = Vec::new(); 
-    let mut buffer = String::new(); 
-    let mut found_keyword: bool = false;
-    let mut found_symbol: bool = false;
-    let mut found_whitespace: bool = false;
-    let mut found_identifier: bool = false;
-    let valid_symbols = ";*()<>=,.";
-    
-    for ch in content.chars() {
-        println!("{}", ch);
-        buffer.push(ch);
-        println!("Buffer: {}", buffer);
-        for token in &tokens {
-            if !found_identifier {
-                if let Token::Keyword(value) = token {
-                    if contains_ignore_case(value,&buffer) {
-                        //println!("Keyword {} contains {}", value, &buffer.to_ascii_uppercase());
-                    }
-                    if value.eq_ignore_ascii_case(&buffer){
-                        println!("Se encontro el keyword: {}", value.to_ascii_uppercase());
-                        final_tokens_list.push(buffer.to_string());
-                        buffer = String::new();
-                    }
-                    found_keyword = true;
-                }
-                if valid_symbols.contains(ch) {
-                    println!("Se encontro el simbolo: {}", ch);
-                    final_tokens_list.push(ch.to_string());
-                    buffer = String::new();
-                    found_symbol = true;
-                }
-                if ch.is_whitespace() {
-                   buffer = String::new();
-                   found_whitespace = true;
-                }
-                if !valid_symbols.contains(ch) && ch.is_ascii_punctuation() {
-                     let error_message = format!("SIMBOLO INVALIDO: {}", ch);
-                     panic!("{}", error_message);
-                 
-                }
-                /*if let Token::Symbol(value) = token {
-                     if ch == *value {
-                        println!("Se encontro el simbolo: {}", ch);
-                        final_tokens_list.push(ch.to_string());
-                        buffer = String::new();
-                        found_symbol = true;
-                     }
-                     else if ch.is_whitespace() {
-                        //println!("Found whitespace");
-                        buffer = String::new();
-                        found_whitespace = true;
-                     }
-                     else {
-                         let error_message = format!("SIMBOLO INVALIDO: {}", ch);
-                         panic!("{}", error_message);
-                     }
-                }*/
-            }
-            
-            if !found_symbol && !found_whitespace && !found_keyword {
-
-                if let Token::Identifier(regex) = token {
-                   if regex.is_match(&buffer) {
-                        println!("{} es un identifier valido", &buffer);
-                        found_identifier = true;
-                   } else if !&buffer.is_empty() {
-                        final_tokens_list.push(buffer.to_string());
-                        println!("{} NO es un identifier valido", &buffer);
-                        buffer = String::new(); 
-                        found_identifier = false;
-                   }
-                }
-
-            }
-            found_whitespace = false;
-            found_keyword = false;
-            found_symbol = false;
-
-        }
-    }
-  
-    println!("######## MOSTRAR LA LISTA FINAL DE TOKENS #######"); 
-    for tok in &final_tokens_list {
-        println!("Token: {}", tok);
-    }
-
-   
-}
-
-
 fn contains_ignore_case(main: &str, sub: &str) -> bool {
     main.to_ascii_uppercase().contains(&sub.to_ascii_uppercase())
-
 }
-
-
-#[derive(Debug)]
-enum Token {
-    Identifier(Regex),
-    Number(i32),
-    Operator(String),
-    Keyword(String),
-    Symbol(char),
-    Whitespace
-}
-
-
-
 
 
 
