@@ -23,12 +23,13 @@ fn main() {
             panic!("ERROR TRYING TO READ THE FILE");
         });
 
-    analisis_lexico(content);
+    let lista_final = analisis_lexico(content);
+    println!("{:?}", lista_final);
 
 }
 
 
-fn analisis_lexico(mut content: String) {
+fn analisis_lexico(mut content: String) -> Vec<String>  {
     content.insert_str(0, " ");
     println!("El contenido: {}", content); 
 
@@ -48,12 +49,33 @@ fn analisis_lexico(mut content: String) {
     
     for ch in content.chars() {
         println!("Char: {}", ch);        
+
         if valid_symbols.contains(ch) {
-            println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
-            final_tokens_list.push(ch.to_string());
-            buffer = String::new();
-            continue;
-        }
+            if end_buffer {
+                println!("Hora de mirar el buffer {}", buffer.to_string());
+                if valid_tokens.contains(&buffer.to_ascii_uppercase()) || id_regex.is_match(&buffer) {
+                    println!("Insertando valor: {}", &buffer);
+                    final_tokens_list.push(buffer.to_string());
+                    println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
+                    final_tokens_list.push(ch.to_string());
+                    buffer = String::new();
+                    start_buffer = false;
+                    end_buffer = false;
+                    continue;
+                }
+                else if !ch.is_whitespace() && !valid_symbols.contains(ch) {
+                    let error_message = format!("KEYWORD O PALABRA INVALIDA: {}", buffer);
+                    panic!("{}", error_message);
+                }
+            }
+            else {
+                println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
+                final_tokens_list.push(ch.to_string());
+                buffer = String::new();
+                continue;
+            }
+
+                    }
         if ch.is_ascii_whitespace() {
             println!("Detectado espacio en blanco");
             if !start_buffer {
@@ -73,7 +95,7 @@ fn analisis_lexico(mut content: String) {
                     end_buffer = false;
                     continue;
                 }
-                else {
+                else if !ch.is_whitespace() {
                     let error_message = format!("KEYWORD O PALABRA INVALIDA: {}", buffer);
                     panic!("{}", error_message);
                 }
@@ -106,6 +128,7 @@ fn analisis_lexico(mut content: String) {
     for tok in &final_tokens_list {
         println!("Token: {}", tok);
     }
+    final_tokens_list // retorno
 }
 
 #[allow(dead_code)]
@@ -113,31 +136,22 @@ fn contains_ignore_case(main: &str, sub: &str) -> bool {
     main.to_ascii_uppercase().contains(&sub.to_ascii_uppercase())
 }
 
+// tests
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    #[test]
+    fn analisis_lexico_test() {
+        let test_cases = vec![
+            (String::from("select * from tabla1;"), vec!["select","*","from","tabla1",";"]),
+        //    (String::from("select * from tabla1    ;"), vec!["select","*","from","tabla1", ";"]),
+            (String::from("select * from tabla1 inner join tabla2;"), vec!["select","*","from","tabla1","inner", "join", "tabla2", ";"]),
+            (String::from("select * from tabla1 inner join tabla2 ;"),vec!["select","*","from","tabla1","inner", "join", "tabla2", ";"])
+        ];
+        for case in test_cases {
+            assert_eq!(analisis_lexico(case.0), case.1);
+        }
+    }
+}
 
