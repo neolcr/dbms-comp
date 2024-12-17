@@ -28,7 +28,7 @@ fn main() {
 
 #[allow(unused_variables)]
 fn lexic_analysis(content: String) {
-    println!("The content: {}", content); 
+    println!("El contenido: {}", content); 
 
     let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
     println!("{:?}", id_regex);
@@ -37,8 +37,11 @@ fn lexic_analysis(content: String) {
         Token::Keyword("SELECT".to_string()),
         Token::Symbol('*'),
         Token::Keyword("FROM".to_string()),
+        Token::Keyword("INNER".to_string()),
+        Token::Keyword("JOIN".to_string()),
         Token::Identifier(id_regex),
         Token::Symbol(';'),
+        Token::Symbol('('),
 
     ];
     
@@ -47,45 +50,51 @@ fn lexic_analysis(content: String) {
     let mut found_keyword: bool = false;
     let mut found_symbol: bool = false;
     let mut found_whitespace: bool = false;
+    let mut found_identifier: bool = false;
 
     for ch in content.chars() {
         println!("{}", ch);
         buffer.push(ch);
         println!("Buffer: {}", buffer);
         for token in &tokens {
-            if let Token::Keyword(value) = token {
-                if contains_ignore_case(value,&buffer) {
-                    //println!("Keyword {} contains {}", value, &buffer.to_ascii_uppercase());
+            if !found_identifier {
+                if let Token::Keyword(value) = token {
+                    if contains_ignore_case(value,&buffer) {
+                        //println!("Keyword {} contains {}", value, &buffer.to_ascii_uppercase());
+                    }
+                    if value.eq_ignore_ascii_case(&buffer){
+                        println!("Se encontro el keyword: {}", value.to_ascii_uppercase());
+                        final_tokens_list.push(buffer.to_string());
+                        buffer = String::new();
+                    }
+                    found_keyword = true;
                 }
-                if value.eq_ignore_ascii_case(&buffer){
-                    println!("Found the whole word: {}", value.to_ascii_uppercase());
-                    final_tokens_list.push(buffer.to_string());
-                    buffer = String::new();
+                if let Token::Symbol(value) = token {
+                     if ch == *value {
+                        println!("Se encontro el simbolo: {}", ch);
+                        final_tokens_list.push(ch.to_string());
+                        buffer = String::new();
+                        found_symbol = true;
+                     }
+                     else if ch.is_whitespace() {
+                        //println!("Found whitespace");
+                        buffer = String::new();
+                        found_whitespace = true;
+                     }
                 }
-                found_keyword = true;
             }
-            if let Token::Symbol(value) = token {
-                 if ch.is_whitespace() {
-                    println!("Found whitespace");
-                    buffer = String::new();
-                    found_whitespace = true;
-                 }
-                 else if ch == *value {
-                    println!("Found symbol: {}", ch);
-                    final_tokens_list.push(ch.to_string());
-                    buffer = String::new();
-                    found_symbol = true;
-                 }
-            }
+            
             if !found_symbol && !found_whitespace && !found_keyword {
 
                 if let Token::Identifier(regex) = token {
                    if regex.is_match(&buffer) {
-                        println!("{} is a valid identifier", &buffer);
+                        println!("{} es un identifier valido", &buffer);
+                        found_identifier = true;
                    } else if !&buffer.is_empty() {
                         final_tokens_list.push(buffer.to_string());
-                        println!("{} is NOT a valid identifier", &buffer);
+                        println!("{} NO es un identifier valido", &buffer);
                         buffer = String::new(); 
+                        found_identifier = false;
                    }
                 }
 
@@ -97,9 +106,9 @@ fn lexic_analysis(content: String) {
         }
     }
     
-    println!("Show final list of tokens"); 
+    println!("######## MOSTRAR LA LISTA FINAL DE TOKENS #######"); 
     for tok in &final_tokens_list {
-        println!("Final token: {}", tok);
+        println!("Token: {}", tok);
     }
     
     
