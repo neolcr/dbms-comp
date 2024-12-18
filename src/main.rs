@@ -34,13 +34,16 @@ enum Tipo {
     InicioKeyword,
     SimboloValido,
     SimboloInvalido,
+    PuntoComa,
     FIN
 }
 
 fn get_tipo(ch: char) -> Tipo {
 
     let valid_symbols = ";*()<>=,.";
-
+    if ch == ';' {
+        return Tipo::PuntoComa;
+    }
     if ch.is_whitespace() {
         return Tipo::Espacio
     }
@@ -136,7 +139,7 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
     let mut final_tokens_list: Vec<String> = Vec::new(); 
     let mut i: usize = 0;
     
-    while i < content.len() {
+    while i <= content.len() + 1 {
         let some_ch = content.chars().nth(i);
         
         let ch = match some_ch {
@@ -148,6 +151,10 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
         let tipo: Tipo = get_tipo(ch);
         match tipo {
             Tipo::FIN => println!("Se alcanza el fin"),
+            Tipo::PuntoComa => {
+                println!("Punto y coma");
+                final_tokens_list.push(ch.to_string());
+            }
             Tipo::Espacio =>  {
                 println!("Es un espacio");
             }
@@ -166,6 +173,11 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
                     panic!("IDENTIFICADOR INVALIDO");
                 }
                 final_tokens_list.push(seg);
+                let next = get_next(i, &content);
+                println!("next: {}", next);
+                if next == ';' {
+                    final_tokens_list.push(next.to_string());
+                }
             }
             Tipo::SimboloValido => {
                 println!("Simbolo valido");
@@ -182,106 +194,14 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
     final_tokens_list
 }
 
-fn analisis_lexico3(mut content: String) -> Vec<String>  {
-    content.insert_str(0, " ");
-    println!("El contenido: {}", content); 
-
-    let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
-    println!("{:?}", id_regex);
-
-    let valid_tokens = vec![
-        "SELECT".to_string(),"FROM".to_string(),"INNER".to_string(),"JOIN".to_string()
-    ];
-    
-    let valid_symbols = ";*()<>=,.";
-
-    let mut final_tokens_list: Vec<String> = Vec::new(); 
-    let mut buffer = String::new(); 
-    let mut start_buffer = false;
-    let mut end_buffer = false;
-    
-    for ch in content.chars() {
-        println!("Char: {}", ch);        
-
-        if valid_symbols.contains(ch) {
-            if end_buffer {
-                println!("Hora de mirar el buffer {}", buffer.to_string());
-                if valid_tokens.contains(&buffer.to_ascii_uppercase()) || id_regex.is_match(&buffer) {
-                    println!("Insertando valor: {}", &buffer);
-                    final_tokens_list.push(buffer.to_string());
-                    println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
-                    final_tokens_list.push(ch.to_string());
-                    buffer = String::new();
-                    start_buffer = false;
-                    end_buffer = false;
-                    continue;
-                }
-                else if !ch.is_whitespace() && !valid_symbols.contains(ch) {
-                    let error_message = format!("KEYWORD O PALABRA INVALIDA: {}", buffer);
-                    panic!("{}", error_message);
-                }
-            }
-            else {
-                println!("El simbolo {} se guarda en el buffer y continue", ch.to_string());
-                final_tokens_list.push(ch.to_string());
-                buffer = String::new();
-                continue;
-            }
-
-                    }
-        if ch.is_ascii_whitespace() {
-            println!("Detectado espacio en blanco");
-            if !start_buffer {
-                println!("Empiezo a llenar el buffer");
-                start_buffer = true;
-                end_buffer = true;
-                buffer = String::new();
-                continue;
-            }
-            if end_buffer {
-                println!("Hora de mirar el buffer {}", buffer.to_string());
-                if valid_tokens.contains(&buffer.to_ascii_uppercase()) || id_regex.is_match(&buffer) {
-                    println!("Insertando valor: {}", &buffer);
-                    final_tokens_list.push(buffer.to_string());
-                    buffer = String::new();
-                    start_buffer = false;
-                    end_buffer = false;
-                    continue;
-                }
-                else if !ch.is_whitespace() {
-                    let error_message = format!("KEYWORD O PALABRA INVALIDA: {}", buffer);
-                    panic!("{}", error_message);
-                }
-            }
-        }
-        if !valid_symbols.contains(ch) && ch.is_ascii_punctuation() {
-             let error_message = format!("SIMBOLO INVALIDO: {}", ch);
-             panic!("{}", error_message);
-         
-        }
-        // descartados simbolos puedo meter en el buffer
-
-        if ch.is_alphabetic() || ch.is_numeric() {
-           if !start_buffer {
-                println!("Detecto nuevo caracter valido: empiezo a llenar el buffer");
-                start_buffer = true;
-                end_buffer = true;
-                buffer = String::new();
-            }
-
-        }
+fn get_next(i: usize, content: &String) -> char {
+    let some_ch = content.chars().nth(i);
         
-        if start_buffer {
-            buffer.push(ch);
-            println!("Buffer: {}", buffer);
-        }
-        
-    }
-    println!("######## MOSTRAR LA LISTA FINAL DE TOKENS #######"); 
-    for tok in &final_tokens_list {
-        println!("Token: {}", tok);
-    }
-    final_tokens_list // retorno
+    let ch = match some_ch {
+        Some(c) => c,
+        None => ' '  
+    };
+    ch
 }
 
 #[allow(dead_code)]
@@ -297,10 +217,11 @@ mod tests {
     #[test]
     fn analisis_lexico_test() {
         let test_cases = vec![
-            (String::from("select * from tabla1;"), vec!["select","*","from","tabla1",";"]),
-        //    (String::from("select * from tabla1    ;"), vec!["select","*","from","tabla1", ";"]),
-            (String::from("select * from tabla1 inner join tabla2;"), vec!["select","*","from","tabla1","inner", "join", "tabla2", ";"]),
-            (String::from("select * from tabla1 inner join tabla2 ;"),vec!["select","*","from","tabla1","inner", "join", "tabla2", ";"])
+            (String::from("SELECT * FROM TABLA1;"), vec!["SELECT","*","FROM","TABLA1",";"]),
+            (String::from("select * from tabla1    ;"), vec!["SELECT","*","FROM","TABLA1", ";"]),
+            (String::from("select * from tabla1 inner join tabla2;"), vec!["SELECT","*","FROM","TABLA1","INNER", "JOIN", "TABLA2", ";"]),
+            (String::from("select * from tabla1 inner join tabla2 ;"),vec!["SELECT","*","FROM","TABLA1","INNER", "JOIN", "TABLA2", ";"]),
+            (String::from("select * from tabla1 inner join tabla2 where name = 'fulano' ;"),vec!["SELECT","*","FROM","TABLA1","INNER", "JOIN", "TABLA2", "WHERE", "NAME","=", "'fulano'", ";"]),
         ];
         for case in test_cases {
             assert_eq!(analisis_lexico(case.0), case.1);
