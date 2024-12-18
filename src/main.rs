@@ -44,7 +44,7 @@ fn get_tipo(ch: char) -> Tipo {
     if ch.is_whitespace() {
         return Tipo::Espacio
     }
-    if ch == '"' {
+    if ch == '\'' {
         return Tipo::InicioString;
     }
     if ch.is_alphanumeric() || ch.is_numeric() {
@@ -82,8 +82,47 @@ fn extraer_keyword(i: usize, content: &String) -> (usize, String) {
         };
         println!("{}", buffer);
     }
+    (j, buffer.to_uppercase())
+}
+
+fn extraer_string(i: usize, content: &String) -> (usize, String) {
+    let mut j: usize = i;
+
+    let mut some_ch = content.chars().nth(i);
+
+    let mut ch = match some_ch {
+        Some(c) => c, 
+        None => ' ',
+    };
+    let mut buffer = String::new();
+    buffer.push(ch);
+    j = j + 1;
+
+    some_ch = content.chars().nth(j);
+    ch = match some_ch {
+        Some(c) => c, 
+        None => ' ',
+    };
+    
+    buffer.push(ch);    
+
+    while ch != '\'' {
+        j = j + 1;
+        if j == content.len() - 1 {
+            panic!("NO se encuentra fin de comillas en 'string'");
+        }
+        some_ch = content.chars().nth(j);
+
+        ch = match some_ch {
+            Some(c) => c, 
+            None => ' ',
+        };
+        buffer.push(ch);    
+    }
+    println!("Retornar string: {}", buffer);
     (j, buffer)
 }
+
 
 fn analisis_lexico(mut content: String) -> Vec<String>  {
     println!("El contenido: {}", content); 
@@ -91,17 +130,14 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
     let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
     println!("{:?}", id_regex);
 
-    let valid_tokens = vec![
+    let valid_keyword = vec![
         "SELECT".to_string(),"FROM".to_string(),"INNER".to_string(),"JOIN".to_string()
     ];
     
 
     let mut final_tokens_list: Vec<String> = Vec::new(); 
-    let mut buffer = String::new(); 
-    let mut start_buffer = false;
-    let mut end_buffer = false;
-
     let mut i: usize = 0;
+    
     while i < content.len() {
         let some_ch = content.chars().nth(i);
         
@@ -119,10 +155,19 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
             }
             Tipo::InicioString => {
                 println!("Inicio de string");
+                let (j, seg) = extraer_string(i, &content);
+                i = j;
+                final_tokens_list.push(seg);
+
             }
             Tipo::InicioKeyword =>{
                 println!("Inicio de keyword");
-                extraer_keyword(i, &content);
+                let (j, seg) = extraer_keyword(i, &content);
+                i = j;
+                //if !id_regex.is_match(&seg) {
+                //    panic!("KEYWORD INVALIDO");
+                //}
+                final_tokens_list.push(seg);
             }
             Tipo::SimboloValido => {
                 println!("Simbolo valido");
