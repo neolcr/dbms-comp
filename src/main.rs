@@ -87,23 +87,21 @@ fn extraer_keyword(i: usize, content: &String) -> (usize, String) {
 
 fn extraer_string(i: usize, content: &String) -> (usize, String) {
     let mut j: usize = i;
-
+    let mut buffer = String::new();
+    
     let mut some_ch = content.chars().nth(i);
-
     let mut ch = match some_ch {
         Some(c) => c, 
         None => ' ',
     };
-    let mut buffer = String::new();
     buffer.push(ch);
-    j = j + 1;
 
+    j = j + 1;
     some_ch = content.chars().nth(j);
     ch = match some_ch {
         Some(c) => c, 
         None => ' ',
     };
-    
     buffer.push(ch);    
 
     while ch != '\'' {
@@ -164,16 +162,18 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
                 println!("Inicio de keyword");
                 let (j, seg) = extraer_keyword(i, &content);
                 i = j;
-                //if !id_regex.is_match(&seg) {
-                //    panic!("KEYWORD INVALIDO");
-                //}
+                if !valid_keyword.contains(&seg) && !id_regex.is_match(&seg) {
+                    panic!("IDENTIFICADOR INVALIDO");
+                }
                 final_tokens_list.push(seg);
             }
             Tipo::SimboloValido => {
                 println!("Simbolo valido");
+                final_tokens_list.push(ch.to_string());
             }
             Tipo::SimboloInvalido => {
                 println!("Simbolo invalido");
+                panic!("SIMBOLO INVALIDO");
             }
         }
         i = i + 1;
