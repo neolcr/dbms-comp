@@ -28,8 +28,116 @@ fn main() {
 
 }
 
+enum Tipo {
+    Espacio,
+    InicioString,
+    InicioKeyword,
+    SimboloValido,
+    SimboloInvalido,
+    FIN
+}
+
+fn get_tipo(ch: char) -> Tipo {
+
+    let valid_symbols = ";*()<>=,.";
+
+    if ch.is_whitespace() {
+        return Tipo::Espacio
+    }
+    if ch == '"' {
+        return Tipo::InicioString;
+    }
+    if ch.is_alphanumeric() || ch.is_numeric() {
+        return Tipo::InicioKeyword;
+    }
+    if valid_symbols.contains(ch) {
+        return Tipo::SimboloValido;
+    }
+    if !valid_symbols.contains(ch) && ch.is_ascii_punctuation() {
+        return Tipo::SimboloInvalido;
+    }
+    Tipo::FIN 
+}
+
+fn extraer_keyword(i: usize, content: &String) -> (usize, String) {
+    let mut j: usize = i;
+
+    let mut some_ch = content.chars().nth(i);
+
+    let mut ch = match some_ch {
+        Some(c) => c, 
+        None => ' ',
+    };
+    let mut buffer = String::new();
+
+    while !ch.is_whitespace() && ch != ';' {
+        buffer.push(ch);    
+        println!("Buffer: {}", buffer);
+        j = j + 1;
+        some_ch = content.chars().nth(j);
+
+        ch = match some_ch {
+            Some(c) => c, 
+            None => ' ',
+        };
+        println!("{}", buffer);
+    }
+    (j, buffer)
+}
 
 fn analisis_lexico(mut content: String) -> Vec<String>  {
+    println!("El contenido: {}", content); 
+
+    let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
+    println!("{:?}", id_regex);
+
+    let valid_tokens = vec![
+        "SELECT".to_string(),"FROM".to_string(),"INNER".to_string(),"JOIN".to_string()
+    ];
+    
+
+    let mut final_tokens_list: Vec<String> = Vec::new(); 
+    let mut buffer = String::new(); 
+    let mut start_buffer = false;
+    let mut end_buffer = false;
+
+    let mut i: usize = 0;
+    while i < content.len() {
+        let some_ch = content.chars().nth(i);
+        
+        let ch = match some_ch {
+            Some(c) => c,
+            None => ' '  
+        };
+
+
+        let tipo: Tipo = get_tipo(ch);
+        match tipo {
+            Tipo::FIN => println!("Se alcanza el fin"),
+            Tipo::Espacio =>  {
+                println!("Es un espacio");
+            }
+            Tipo::InicioString => {
+                println!("Inicio de string");
+            }
+            Tipo::InicioKeyword =>{
+                println!("Inicio de keyword");
+                extraer_keyword(i, &content);
+            }
+            Tipo::SimboloValido => {
+                println!("Simbolo valido");
+            }
+            Tipo::SimboloInvalido => {
+                println!("Simbolo invalido");
+            }
+        }
+        i = i + 1;
+    }
+
+    final_tokens_list
+}
+
+fn analisis_lexico3(mut content: String) -> Vec<String>  {
     content.insert_str(0, " ");
     println!("El contenido: {}", content); 
 
