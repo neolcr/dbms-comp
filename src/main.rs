@@ -215,6 +215,96 @@ fn contains_ignore_case(main: &str, sub: &str) -> bool {
     main.to_ascii_uppercase().contains(&sub.to_ascii_uppercase())
 }
 
+
+
+#[derive(Debug)]
+enum SqlAST {
+    Select(Box<Select>),
+    Expresion(Box<Expression>),
+}
+
+
+#[derive(Debug)]
+struct Select {
+    cols: Vec<Column>,
+    from: Table, 
+    wherec: Option<Condition>,
+    order_by: Option<OrderBy>,
+    limit: Option<u32>,
+}
+
+
+#[derive(Debug)]
+struct Column {
+    name: String
+}
+
+#[derive(Debug)]
+struct Table {
+    name: String
+}
+
+#[derive(Debug)]
+struct OrderBy {
+    name: String
+}
+
+
+#[derive(Debug)]
+struct Condition {
+    comparison: (Box<Expression>, ComparisonOp, Box<Expression>),
+    and: (Box<Condition>, Box<Condition>),
+    or: (Box<Condition>, Box<Condition>),
+}
+
+
+#[derive(Debug)]
+struct Expression {
+    column:Column,
+    value: Value,
+    binary_op:(Box<Expression>, BinaryOp, Box<Expression>),
+
+}
+
+#[derive(Debug)]
+enum ComparisonOp {
+    Equal,
+    GreaterThan,
+    LessThan,
+    NotEqual,
+}
+
+#[derive(Debug)]
+enum BinaryOp {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
+
+#[derive(Debug)]
+enum Value {
+    Integer(i32),
+    String(String),
+}
+
+
+
+#[derive(Debug)]
+enum OrderDirection {
+    Ascending,
+    Descending,
+}
+
+
+
+
+
+
+
+
+
 // tests
 #[cfg(test)]
 mod tests {
