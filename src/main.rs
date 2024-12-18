@@ -31,8 +31,7 @@ fn main() {
     let lista_fase1 = analisis_lexico_fase1(&content);
     info!("Lista fase 1 : {:?}", lista_fase1);
     let lista_final = analisis_lexico_fase2(lista_fase1);
-    info!("{:?}", lista_final);
-
+    info!("Lista final: {:?}", lista_final);
 }
 
 #[allow(dead_code)]
@@ -106,26 +105,14 @@ fn get_tipo(ch: char) -> Tipo {
 
 fn extraer_keyword(i: usize, content: &String) -> (usize, String) {
     let mut j: usize = i;
-
-    let mut some_ch = content.chars().nth(i);
-
-    let mut ch = match some_ch {
-        Some(c) => c, 
-        None => ' ',
-    };
     let mut buffer = String::new();
+    let mut ch = get_next(i, content);
 
     while !ch.is_whitespace() && ch != ';' {
         buffer.push(ch);    
         debug!("Buffer: {}", buffer);
         j = j + 1;
-        some_ch = content.chars().nth(j);
-
-        ch = match some_ch {
-            Some(c) => c, 
-            None => ' ',
-        };
-        debug!("{}", buffer);
+        ch = get_next(j, content);
     }
     (j, buffer.to_uppercase())
 }
@@ -133,20 +120,11 @@ fn extraer_keyword(i: usize, content: &String) -> (usize, String) {
 fn extraer_string(i: usize, content: &String) -> (usize, String) {
     let mut j: usize = i;
     let mut buffer = String::new();
-    
-    let mut some_ch = content.chars().nth(i);
-    let mut ch = match some_ch {
-        Some(c) => c, 
-        None => ' ',
-    };
+    let mut ch = get_next(i, content);
     buffer.push(ch);
 
     j = j + 1;
-    some_ch = content.chars().nth(j);
-    ch = match some_ch {
-        Some(c) => c, 
-        None => ' ',
-    };
+    ch = get_next(j, content);
     buffer.push(ch);    
 
     while ch != '\'' {
@@ -154,12 +132,7 @@ fn extraer_string(i: usize, content: &String) -> (usize, String) {
         if j == content.len() - 1 {
             panic!("NO se encuentra fin de comillas en 'string'");
         }
-        some_ch = content.chars().nth(j);
-
-        ch = match some_ch {
-            Some(c) => c, 
-            None => ' ',
-        };
+        ch = get_next(j, content);
         buffer.push(ch);    
     }
     debug!("Retornar string: {}", buffer);
@@ -183,14 +156,7 @@ fn analisis_lexico_fase2(content: String) -> Vec<String>  {
     let mut i: usize = 0;
     
     while i <= content.len() + 1 {
-        let some_ch = content.chars().nth(i);
-        
-        let ch = match some_ch {
-            Some(c) => c,
-            None => ' '  
-        };
-
-
+        let ch = get_next(i, &content);
         let tipo: Tipo = get_tipo(ch);
         match tipo {
             Tipo::FIN => debug!("Se alcanza el fin"),
