@@ -40,7 +40,7 @@ enum Tipo {
 
 fn get_tipo(ch: char) -> Tipo {
 
-    let valid_symbols = ";*()<>=,.";
+    let valid_symbols = "*()<>=,.";
     if ch == ';' {
         return Tipo::PuntoComa;
     }
