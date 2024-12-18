@@ -2,30 +2,72 @@ use core::panic;
 use std::fs;
 use std::env;
 use regex::Regex;
+use log::{debug, error, info};
+use env_logger;
 
 fn main() {
-    
+    env_logger::init(); 
+    env::set_var("RUST_LOG", "debug");
+
+
     match env::current_dir() {
-        Ok(path) => println!("Current directory: {}", path.display()),
-        Err(error) => eprintln!("Error: {}", error),
+        Ok(path) => debug!("Current directory: {}", path.display()),
+        Err(error) => debug!("Error: {}", error),
     }
 
     match env::current_exe() {
-        Ok(exe) => println!("Current directory exe: {}", exe.display()),
-        Err(error) => eprintln!("Error: {}", error),
+        Ok(exe) => debug!("Current directory exe: {}", exe.display()),
+        Err(error) => debug!("Error: {}", error),
     }
 
     let file_path = "src/sql/query.sql";
         
     let content = fs::read_to_string(file_path)
         .unwrap_or_else(|e| {
-            eprintln!("Error reading file : {}", e);
+            debug!("Error reading file : {}", e);
             panic!("ERROR TRYING TO READ THE FILE");
         });
+    
+    let lista_fase1 = analisis_lexico_fase1(&content);
+    info!("Lista fase 1 : {:?}", lista_fase1);
+    let lista_final = analisis_lexico_fase2(lista_fase1);
+    info!("{:?}", lista_final);
 
-    let lista_final = analisis_lexico(content);
-    println!("{:?}", lista_final);
+}
 
+#[allow(dead_code)]
+fn analisis_lexico_fase0(content: &String) -> String {
+    // reemplazar todos los espacios consecutivos por un solo espacio 
+    let mut result = String::new();
+    let mut anterior_espacio: bool = false;
+
+    for ch in content.chars() {
+        if !anterior_espacio && ch.is_whitespace() {
+            result.push(' ');
+            anterior_espacio = true;
+        } else if !ch.is_whitespace() {
+            anterior_espacio = false;
+            result.push(ch);
+        }         
+
+    }
+    result
+
+}
+
+fn analisis_lexico_fase1(content: &String) -> String {
+    let mut result = String::new();
+    let valid_symbols = "*()<>=,;.";
+    for ch in content.chars() {
+        if valid_symbols.contains(ch) {
+            result.push(' ');
+            result.push(ch);
+            result.push(' ');
+        } else {
+            result.push(ch);
+        }
+    }
+    result
 }
 
 enum Tipo {
@@ -75,7 +117,7 @@ fn extraer_keyword(i: usize, content: &String) -> (usize, String) {
 
     while !ch.is_whitespace() && ch != ';' {
         buffer.push(ch);    
-        println!("Buffer: {}", buffer);
+        debug!("Buffer: {}", buffer);
         j = j + 1;
         some_ch = content.chars().nth(j);
 
@@ -83,7 +125,7 @@ fn extraer_keyword(i: usize, content: &String) -> (usize, String) {
             Some(c) => c, 
             None => ' ',
         };
-        println!("{}", buffer);
+        debug!("{}", buffer);
     }
     (j, buffer.to_uppercase())
 }
@@ -120,16 +162,17 @@ fn extraer_string(i: usize, content: &String) -> (usize, String) {
         };
         buffer.push(ch);    
     }
-    println!("Retornar string: {}", buffer);
+    debug!("Retornar string: {}", buffer);
     (j, buffer)
 }
 
 
-fn analisis_lexico(mut content: String) -> Vec<String>  {
-    println!("El contenido: {}", content); 
+fn analisis_lexico_fase2(content: String) -> Vec<String>  {
+    debug!("El contenido: {}", content); 
+//    let id_regex = Regex::new(r"^[a-zA-Z]+\.[a-zA-Z0-9]*$").unwrap();
 
     let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
-    println!("{:?}", id_regex);
+    debug!("{:?}", id_regex);
 
     let valid_keyword = vec![
         "SELECT".to_string(),"FROM".to_string(),"INNER".to_string(),"JOIN".to_string()
@@ -150,42 +193,39 @@ fn analisis_lexico(mut content: String) -> Vec<String>  {
 
         let tipo: Tipo = get_tipo(ch);
         match tipo {
-            Tipo::FIN => println!("Se alcanza el fin"),
+            Tipo::FIN => debug!("Se alcanza el fin"),
             Tipo::PuntoComa => {
-                println!("Punto y coma");
+                debug!("Punto y coma");
                 final_tokens_list.push(ch.to_string());
             }
             Tipo::Espacio =>  {
-                println!("Es un espacio");
+                debug!("Es un espacio");
             }
             Tipo::InicioString => {
-                println!("Inicio de string");
+                debug!("Inicio de string");
                 let (j, seg) = extraer_string(i, &content);
                 i = j;
                 final_tokens_list.push(seg);
 
             }
             Tipo::InicioKeyword =>{
-                println!("Inicio de keyword");
+                debug!("Inicio de keyword");
                 let (j, seg) = extraer_keyword(i, &content);
                 i = j;
-                if !valid_keyword.contains(&seg) && !id_regex.is_match(&seg) {
-                    panic!("IDENTIFICADOR INVALIDO");
-                }
                 final_tokens_list.push(seg);
                 let next = get_next(i, &content);
-                println!("next: {}", next);
+                debug!("next: {}", next);
                 if next == ';' {
                     final_tokens_list.push(next.to_string());
                 }
             }
             Tipo::SimboloValido => {
-                println!("Simbolo valido");
+                debug!("Simbolo valido");
                 final_tokens_list.push(ch.to_string());
             }
             Tipo::SimboloInvalido => {
-                println!("Simbolo invalido");
-                panic!("SIMBOLO INVALIDO");
+                error!("Simbolo invalido");
+                panic!("SIMBOLO INVALIDO:  '{}'", ch);
             }
         }
         i = i + 1;
@@ -215,7 +255,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn analisis_lexico_test() {
+    fn analisis_lexico_fase2_test() {
         let test_cases = vec![
             (String::from("SELECT * FROM TABLA1;"), vec!["SELECT","*","FROM","TABLA1",";"]),
             (String::from("select * from tabla1    ;"), vec!["SELECT","*","FROM","TABLA1", ";"]),
@@ -224,7 +264,7 @@ mod tests {
             (String::from("select * from tabla1 inner join tabla2 where name = 'fulano' ;"),vec!["SELECT","*","FROM","TABLA1","INNER", "JOIN", "TABLA2", "WHERE", "NAME","=", "'fulano'", ";"]),
         ];
         for case in test_cases {
-            assert_eq!(analisis_lexico(case.0), case.1);
+            assert_eq!(analisis_lexico_fase2(case.0), case.1);
         }
     }
 }
