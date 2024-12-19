@@ -144,9 +144,6 @@ fn analisis_lexico_fase2(content: String) -> Vec<String>  {
     debug!("El contenido: {}", content); 
 //    let id_regex = Regex::new(r"^[a-zA-Z]+\.[a-zA-Z0-9]*$").unwrap();
 
-    let id_regex = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
-    debug!("{:?}", id_regex);
-
     let valid_keyword = vec![
         "SELECT".to_string(),"FROM".to_string(),"INNER".to_string(),"JOIN".to_string()
     ];
@@ -215,17 +212,25 @@ fn contains_ignore_case(main: &str, sub: &str) -> bool {
     main.to_ascii_uppercase().contains(&sub.to_ascii_uppercase())
 }
 
-
+trait Base: {}
 
 #[derive(Debug)]
-enum SqlAST {
-    Select(Box<Select>),
-    Expresion(Box<Expression>),
+struct SqlAST {
+    commands: Vec<SqlCommand>
 }
 
 
 #[derive(Debug)]
+enum SqlCommand {
+   SelectCommand(Select), 
+   InsertCommand(Insert), 
+   UpdateCommand(Update), 
+   DeleteCommand(Delete), 
+}
+
+#[derive(Debug)]
 struct Select {
+    all: bool,
     cols: Vec<Column>,
     from: Table, 
     wherec: Option<Condition>,
@@ -233,6 +238,14 @@ struct Select {
     limit: Option<u32>,
 }
 
+#[derive(Debug)]
+struct Insert;
+
+#[derive(Debug)]
+struct Update;
+
+#[derive(Debug)]
+struct Delete;
 
 #[derive(Debug)]
 struct Column {
